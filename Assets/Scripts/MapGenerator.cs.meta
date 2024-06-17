@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: b0b8d507e14fc8748ba0845c727f7ff1
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - leftPart: {instanceID: 0}
+  - rightPart: {instanceID: 0}
+  - jumpPart: {instanceID: 0}
+  - mapObject: {instanceID: 0}
+  - tutorialPart: {instanceID: 0}
+  - tutorialPartTwo: {instanceID: 0}
+  - breakableObjectPrefab: {fileID: 919132149155446097, guid: 68bde7551dd3e354b939a21214fba300, type: 3}
+  - nonBreakableObjectPrefab: {fileID: 151484, guid: c107d6218da3747479b38075e3042255, type: 3}
+  - playerController: {instanceID: 0}
+  - score: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
