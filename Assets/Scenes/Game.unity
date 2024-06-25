@@ -11183,9 +11183,10 @@ MonoBehaviour:
   smoke: {fileID: 1045450579}
   angryLeft: {fileID: 474718648}
   angryRight: {fileID: 732280282}
+  juicyText: {fileID: 1830615889}
   stars: {fileID: 1241996129}
   juicy: 0
-  healthManagement: {fileID: 0}
+  healthManagement: {fileID: 212480082}
   Flag: {fileID: 918452951}
   Red: {fileID: 2100000, guid: 1df6a31496d570d429948ff6e59c7382, type: 2}
   Green: {fileID: 2100000, guid: a3ad8d6ce06ee29468307cf1169dfdd9, type: 2}

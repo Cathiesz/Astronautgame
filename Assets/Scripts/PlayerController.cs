@@ -14,12 +14,14 @@ public class PlayerController : MonoBehaviour
     public float force = 2f;
 
     private bool isMoving = false;
-    private Vector3 leftRightVector = new Vector3(2f, 0, 0);
+    private Vector3 left = new Vector3(124f, 70.5f, -5f);
+    private Vector3 right = new Vector3(132f, 70.5f, -5f);
+    private Vector3 middle = new Vector3(128f, 70.5f, -5f);
+
+
     private Vector3 up = new Vector3(0, 1.2f, 0);
 
     private Animator anim;
-    private bool leftRight;
-
     public GameObject gameOver;
 
     public AudioSource hurt;
@@ -29,10 +31,11 @@ public class PlayerController : MonoBehaviour
 
     public GameObject angryLeft;
     public GameObject angryRight;
+    public GameObject juicyText;
+
     public GameObject stars;
     public bool juicy;
-    private bool stop;
-    public PlayerHealth healthManagement;
+    public HealthManagement healthManagement;
     private bool healthCooldown;
     public GameObject Flag;
     public Material Red;
@@ -48,20 +51,57 @@ public class PlayerController : MonoBehaviour
 
     void Left()
     {
-        gameObject.GetComponent<Rigidbody>().AddForce(-leftRightVector * force, ForceMode.Impulse);
         isMoving = true;
-        stop = false;
-        StartCoroutine(CooldownRoutine());
-        StartCoroutine(StopLeft());
+        StartCoroutine(MoveLeft());
+        StartCoroutine(MoveMiddle());
+    }
+    private IEnumerator MoveLeft()
+    {
+        Vector3 origPos = gameObject.transform.position;
+        float totalMovementTime = 0.4f;
+        float currentMovementTime = 0f;
+        while (Vector3.Distance(gameObject.transform.position, left) > 0.1f && anim.applyRootMotion)
+        {
+            currentMovementTime += Time.deltaTime;
+            gameObject.transform.position = Vector3.Lerp(origPos, left, currentMovementTime / totalMovementTime);
+            yield return null;
+        }
     }
 
     void Right()
     {
-        gameObject.GetComponent<Rigidbody>().AddForce(leftRightVector * force, ForceMode.Impulse);
         isMoving = true;
-        stop = false;
-        StartCoroutine(CooldownRoutine());
-        StartCoroutine(StopRight());
+        StartCoroutine(MoveRight());
+        StartCoroutine(MoveMiddle());
+    }
+
+    private IEnumerator MoveRight()
+    {
+        Vector3 origPos = gameObject.transform.position;
+        float totalMovementTime = 0.4f;
+        float currentMovementTime = 0f;
+        while (Vector3.Distance(gameObject.transform.position, right) > 0.1f && anim.applyRootMotion)
+        {
+            currentMovementTime += Time.deltaTime;
+            gameObject.transform.position = Vector3.Lerp(origPos, right, currentMovementTime / totalMovementTime);
+            yield return null;
+        }
+
+    }
+
+    private IEnumerator MoveMiddle()
+    {
+        yield return new WaitForSeconds(1.5f);
+        isMoving = false;
+        Vector3 origPos = gameObject.transform.position;
+        float totalMovementTime = 0.5f;
+        float currentMovementTime = 0f;
+        while (Vector3.Distance(gameObject.transform.position, middle) > 0.1f && anim.applyRootMotion)
+        {
+            currentMovementTime += Time.deltaTime;
+            gameObject.transform.position = Vector3.Lerp(origPos, middle, currentMovementTime / totalMovementTime);
+            yield return null;
+        }
     }
 
     void Start()
@@ -97,37 +137,46 @@ public class PlayerController : MonoBehaviour
     private Vector3 restoreSpeed;
     private bool freezed;
 
+    void juicyRoutine()
+    {
+        if (juicy)
+        {
+            smoke.Play();
+            juicyText.SetActive(true);
+            StartCoroutine(Angry());
+        }
+    }
+
     void OnCollisionEnter(Collision collision)
     {
-        if ((collision.gameObject.name == "Obstacle" || collision.gameObject.name == "ObstacleTwo") && collision.gameObject.transform.position.z > gameObject.transform.position.z)
+        if ((collision.gameObject.name == "Obstacle" || collision.gameObject.name == "ObstacleTwo") && collision.gameObject.transform.position.z > gameObject.transform.position.z && !freezed)
         {
-            if (juicy)
-            {
-                smoke.Play();
-                StartCoroutine(Angry());
-            }
+            anim.applyRootMotion = false;
+            hurt.Play(0);
             if (collision.gameObject.tag == "left")
             {
                 if (inputController.leftPercent < 90f)
                 {
-                    loseHealth();
+                    loseHealth(collision.gameObject.tag);
                 }
                 else
                 {
+                    juicyRoutine();
                     freezed = true;
-                    StartCoroutine(Freeze());
+                    StartCoroutine(Freeze(collision.gameObject.tag));
                 }
             }
             if (collision.gameObject.tag == "right")
             {
                 if (inputController.rightPercent < 90f)
                 {
-                    loseHealth();
+                    loseHealth(collision.gameObject.tag);
                 }
                 else
                 {
+                    juicyRoutine();
                     freezed = true;
-                    StartCoroutine(Freeze());
+                    StartCoroutine(Freeze(collision.gameObject.tag));
                 }
             }
             if (collision.gameObject.tag == "jump")
@@ -135,18 +184,19 @@ public class PlayerController : MonoBehaviour
                 if (!(inputController.inputDirectionLeftSide == InputController.Direction.Up
                 || inputController.inputDirectionRightSide == InputController.Direction.Up))
                 {
-                    loseHealth();
+                    loseHealth(collision.gameObject.tag);
                 }
                 else
                 {
+                    juicyRoutine();
                     freezed = true;
-                    StartCoroutine(Freeze());
+                    StartCoroutine(Freeze(collision.gameObject.tag));
                 }
             }
         }
     }
 
-    void loseHealth()
+    void loseHealth(string obst)
     {
         if (!healthCooldown)
         {
@@ -160,7 +210,7 @@ public class PlayerController : MonoBehaviour
             else
             {
                 freezed = true;
-                StartCoroutine(Freeze());
+                StartCoroutine(Freeze(obst));
             }
         }
     }
@@ -248,7 +298,6 @@ public class PlayerController : MonoBehaviour
             if (inputController.inputDirectionLeftSide == InputController.Direction.Left)
             {
                 Left();
-                leftRight = true;
                 GameObject starsClone = GameObject.Instantiate(stars);
                 starsClone.transform.parent = gameObject.transform;
                 starsClone.transform.position = new Vector3(128, 71, -5);
@@ -261,19 +310,12 @@ public class PlayerController : MonoBehaviour
             if (inputController.inputDirectionRightSide == InputController.Direction.Right)
             {
                 Right();
-                leftRight = true;
                 GameObject starsClone = GameObject.Instantiate(stars);
                 starsClone.transform.parent = gameObject.transform;
                 starsClone.transform.position = new Vector3(128, 71, -5);
                 StartCoroutine(RemoveObject(starsClone, 2.0f));
                 success.Play();
             }
-        }
-
-        if (!isMoving && leftRight)
-        {
-            MoveBack();
-            leftRight = false;
         }
 
         if (gameObject.transform.position.y < 70)
@@ -306,29 +348,6 @@ public class PlayerController : MonoBehaviour
         angryLeft.SetActive(false);
         angryRight.SetActive(false);
     }
-
-    private IEnumerator StopLeft()
-    {
-        while (!stop)
-        {
-            yield return new WaitForSeconds(0.325f);
-            gameObject.GetComponent<Rigidbody>().velocity = new Vector3(0, 0, 0);
-            gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
-            stop = true;
-        }
-    }
-
-    private IEnumerator StopRight()
-    {
-        while (!stop)
-        {
-            yield return new WaitForSeconds(0.325f);
-            gameObject.GetComponent<Rigidbody>().velocity = new Vector3(0, 0, 0);
-            gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
-            stop = true;
-        }
-    }
-
     private IEnumerator StopDamage()
     {
         healthCooldown = true;
@@ -336,62 +355,59 @@ public class PlayerController : MonoBehaviour
         healthCooldown = false;
     }
 
-    private IEnumerator StopMiddle()
-    {
-        while (!stop)
-        {
-            yield return new WaitForSeconds(0.325f);
-            gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
-            gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
-            if (gameObject.transform.position.x < 128)
-            {
-                gameObject.transform.position = gameObject.transform.position + (new Vector3(128 - gameObject.transform.position.x, 0, 0));
-            }
-            else if (gameObject.transform.position.x > 128)
-            {
-                gameObject.transform.position = gameObject.transform.position - (new Vector3(Math.Abs(128 - gameObject.transform.position.x), 0, 0));
-            }
-            stop = true;
-        }
-    }
-
-    private IEnumerator Freeze()
+    private IEnumerator Freeze(string obst)
     {
         while (freezed)
         {
-            if (juicy)
+            if (obst == "jump")
             {
-                hurt.Play(0);
-                anim.SetInteger("AnimationPar", 3);
+                anim.SetInteger("AnimationPar", 4);
             }
-            restoreSpeed = mapGenerator.moveBack;
-            float diff = mapGenerator.moveBack.z > 1 ? 2 : 1;
-            yield return new WaitForSeconds(freezeTime * (0.2f / diff));
-            mapGenerator.moveBack = new Vector3(0, 0, 0);
-            yield return new WaitForSeconds(freezeTime * (0.8f / diff));
-            anim.SetInteger("AnimationPar", 1);
+            else if (obst == "left")
+            {
+                anim.SetInteger("AnimationPar", 6);
+            }
+            else if (obst == "right")
+            {
+                anim.SetInteger("AnimationPar", 5);
+            }
+            if (obst == "jump")
+            {
+                restoreSpeed = mapGenerator.moveBack;
+                mapGenerator.moveBack = new Vector3(0, 0, 0);
+                yield return new WaitForSeconds(0.5f);
+                mapGenerator.moveBack = new Vector3(0, 0, 0.05f);
+                yield return new WaitForSeconds(1f);
+                mapGenerator.moveBack = new Vector3(0, 0, 0.3f);
+                yield return new WaitForSeconds(0.1f);
+                anim.SetInteger("AnimationPar", 1);
+            }
+            else if (obst == "left")
+            {
+                restoreSpeed = mapGenerator.moveBack;
+                mapGenerator.moveBack = new Vector3(0, 0, 0);
+                yield return new WaitForSeconds(0.8f);
+                mapGenerator.moveBack = new Vector3(0, 0, 0.05f);
+                yield return new WaitForSeconds(3.5f);
+                anim.SetInteger("AnimationPar", 1);
+            }
+            else if (obst == "right")
+            {
+                restoreSpeed = mapGenerator.moveBack;
+                mapGenerator.moveBack = new Vector3(0, 0, 0);
+                yield return new WaitForSeconds(0.5f);
+                mapGenerator.moveBack = new Vector3(0, 0, 0.05f);
+                yield return new WaitForSeconds(3.4f);
+                anim.SetInteger("AnimationPar", 1);
+            }
+            juicyText.SetActive(false);
+            anim.applyRootMotion = true;
             Vector3 addUp = new Vector3(0, 0, (restoreSpeed.z - mapGenerator.moveBack.z) * 0.0625f);
             for (; mapGenerator.moveBack.z < restoreSpeed.z; mapGenerator.moveBack += addUp)
             {
                 yield return new WaitForSeconds(0.25f);
             }
             freezed = false;
-        }
-    }
-
-    private void MoveBack()
-    {
-        if (gameObject.transform.position.x < 128)
-        {
-            gameObject.GetComponent<Rigidbody>().AddForce(leftRightVector * force, ForceMode.Impulse);
-            stop = false;
-            StartCoroutine(StopMiddle());
-        }
-        else
-        {
-            gameObject.GetComponent<Rigidbody>().AddForce(-leftRightVector * force, ForceMode.Impulse);
-            stop = false;
-            StartCoroutine(StopMiddle());
         }
     }
 }
