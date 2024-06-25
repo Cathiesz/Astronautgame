@@ -6,7 +6,7 @@ public class GameStateManager : MonoBehaviour
 {
     public float GameSpeed = 1;
     public MapGenerator mapGen;
-    public HealthManagement healthManagement;
+    public PlayerHealth healthManagement;
 
     // Start is called before the first frame update
     void Start()

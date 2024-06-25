@@ -35,7 +35,7 @@ public class PlayerController : MonoBehaviour
 
     public GameObject stars;
     public bool juicy;
-    public HealthManagement healthManagement;
+    public PlayerHealth healthManagement;
     private bool healthCooldown;
     public GameObject Flag;
     public Material Red;
